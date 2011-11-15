@@ -1,0 +1,12 @@
+Welcome to the cyclophone project !
+===================================
+
+This art project is designed with many interactive component.
+But this repository contains the code for a Teensy Arduino to send MIDI signals (for sounds and video) depending on the speed of a bike.
+The speed is estimated with a dynamo connected to a diode bridge (because of the AC signal) and voltage divider (because we have a maximum of 25V instead of 5V).
+
+Enjoy !
+Jimmy & Drix, with the video master Hélène Ruiz and the sound master Santiago Guerrero.
+
+For any question or suggestion, feel free to contact us : (Jim OR Drix)@tangibleDisplay.com
+
