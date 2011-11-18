@@ -1,15 +1,8 @@
 const int CHANNEL = 1;
 const int LED_PIN = 11;
-const int DYNAMO_PIN = 0; // TODO : find the real one !
-const int DRUMS_N = 3;
-const int DRUMS[DRUMS_N] = {42, 43, 44};
-const bool TRACK[DRUMS_N][LOOP_SIZE] = 
-{
-  {1, 1, 1, 1}, // shirley
-  {1, 0, 0, 0}, // kick
-  {0, 0, 1, 0}  // hit hat
-};
-int speed, loop_cnt=0;
+const int DYNAMO_PIN = 13;
+const int LOOP_SIZE = 4;
+const int CTRL = 14;
 bool state = HIGH;
 
 
@@ -21,32 +14,30 @@ void setup()
 
 void loop()
 {
-  speed = analogRead(DYNAMO_PIN)<<1; // 0 => 511
+  int speed = getSpeed();
+ 
+  usbMIDI.sendControlChange(CTRL, speed, CHANNEL);
 
-  if (speed > 0)
+  delay(50);
+  digitalWrite(LED_PIN, state=!state);        // toggle LED state
+}
+
+
+int getSpeed()
+{
+  const int FILT_SIZE = 64;                   // simple average filter
+  static int speeds[FILT_SIZE+1]={0};
+  int speed=0;
+
+  speeds[FILT_SIZE] = analogRead(DYNAMO_PIN); // 10bits value
+
+  for (int i=0; i<FILT_SIZE; i++)
   {
-    for (int i=0; i<DRUMS_N; i++) // instrument loop
-    {
-      usbMIDI.sendNoteOff(DRUMS[i], 0, CHANNEL); // switch all off (TODO improve)
-
-      if (TRACK[i][loop_cnt])
-        usbMIDI.sendNoteOn(DRUMS[i], 127, CHANNEL);
-    }
-
-    if (loop_cnt < LOOP_SIZE)
-      ++loop_cnt; // loop counter
-    else 
-      loop_cnt = 0;
-
-    delay(571 - speed);
-    // Explanation, here is what we want:
-    //  - delay(60)  if speed = 511
-    //  - delay(570) if speed = 1
-    // ...the delay is thus: f(x) = -x + 571
+    speeds[i] = speeds[i+1];                  // shift register
+    speed += speeds[i];                       // accumulate
   }
-  else
-    delay(5);
-  
-  digitalWrite(LED_PIN, state=!state); // toggle LED state
+  speed /= (FILT_SIZE*127)/400;               // experimental values
+  speed = (speed>127)? 127 : speed;           // saturation
+  return (speed);
 }
 
